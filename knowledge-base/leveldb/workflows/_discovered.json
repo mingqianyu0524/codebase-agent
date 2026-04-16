@@ -1,0 +1,82 @@
+{
+  "workflows": [
+    {
+      "slug": "write-path",
+      "name": "Write Path",
+      "summary": "The process of persisting a user write through the WAL and MemTable, including the eventual flush to an SSTable.",
+      "entry_points": [
+        "DBImpl::Write",
+        "DBImpl::WriteBatchInternal::InsertInto"
+      ],
+      "files": [
+        "db/db_impl.cc",
+        "db/log_writer.cc",
+        "db/memtable.cc",
+        "db/builder.cc",
+        "table/table_builder.cc"
+      ]
+    },
+    {
+      "slug": "read-path",
+      "name": "Read Path",
+      "summary": "The process of retrieving a value by searching through the MemTable, Immutable MemTables, and SSTables across levels.",
+      "entry_points": [
+        "DBImpl::Get"
+      ],
+      "files": [
+        "db/db_impl.cc",
+        "db/memtable.cc",
+        "db/table_cache.cc",
+        "table/table.cc",
+        "table/block.cc",
+        "util/bloom.cc"
+      ]
+    },
+    {
+      "slug": "compaction-cycle",
+      "name": "Compaction Cycle",
+      "summary": "The background process of merging SSTables from higher levels to lower levels to reclaim space and optimize reads.",
+      "entry_points": [
+        "DBImpl::DoCompaction"
+      ],
+      "files": [
+        "db/db_impl.cc",
+        "db/version_set.cc",
+        "table/merger.cc",
+        "db/builder.cc",
+        "table/table_builder.cc",
+        "db/version_edit.cc"
+      ]
+    },
+    {
+      "slug": "crash-recovery",
+      "name": "Crash Recovery",
+      "summary": "The process of reconstructing the database state from the Manifest and replaying the WAL after an unclean shutdown.",
+      "entry_points": [
+        "DBImpl::Recover"
+      ],
+      "files": [
+        "db/db_impl.cc",
+        "db/version_set.cc",
+        "db/version_edit.cc",
+        "db/log_reader.cc",
+        "db/memtable.cc"
+      ]
+    },
+    {
+      "slug": "range-scan",
+      "name": "Range Scan",
+      "summary": "The process of iterating over a sorted range of keys across multiple memory and disk components.",
+      "entry_points": [
+        "DBImpl::NewIterator"
+      ],
+      "files": [
+        "db/db_impl.cc",
+        "table/merger.cc",
+        "table/table.cc",
+        "table/two_level_iterator.cc",
+        "table/block.cc"
+      ]
+    }
+  ]
+}
