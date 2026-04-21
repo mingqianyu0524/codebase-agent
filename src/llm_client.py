@@ -1,4 +1,4 @@
-"""OpenAI-compatible LLM wrapper (default: OpenRouter)."""
+"""OpenAI-compatible LLM wrapper (default: Kimi internal deployment)."""
 from __future__ import annotations
 
 import time
@@ -10,7 +10,7 @@ from .config import load_config, resolve_api_key
 
 
 class LLMClient:
-    def __init__(self, provider: str = "openrouter", config: Optional[dict] = None):
+    def __init__(self, provider: str = "kimi", config: Optional[dict] = None):
         cfg = config or load_config()
         llm_cfg = cfg["llm"]
         prov_cfg = llm_cfg["providers"][provider]
@@ -18,7 +18,7 @@ class LLMClient:
         if not api_key:
             raise RuntimeError(
                 f"API key not set for provider '{provider}'. "
-                f"Set env var {prov_cfg.get('api_key_env', 'OPENROUTER_API_KEY')}."
+                f"Check 'api_key' or 'api_key_env' in agent_config.yaml."
             )
         self.client = OpenAI(base_url=prov_cfg["base_url"], api_key=api_key)
         self.model = prov_cfg["default_model"]

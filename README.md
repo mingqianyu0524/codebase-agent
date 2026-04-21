@@ -1,6 +1,6 @@
-# Codebase Knowledge Agent — LevelDB Annotation Pilot
+# Codebase Knowledge Agent — HMOS AI Engine BLE 协同仲裁模块
 
-A Python-based agent that uses **Codebase-Memory** (structural analysis) + **LLM** (semantic annotation) to construct a layered knowledge base from source code. This pilot uses Google's [LevelDB](https://github.com/google/leveldb) C++ project as the test codebase.
+A Python-based agent that uses **Codebase-Memory** (structural analysis) + **LLM** (semantic annotation) to construct a layered knowledge base from source code. This instance targets the **HMOS AI Engine BLE collaborative arbitration module** (TypeScript).
 
 ## Overview
 
@@ -9,17 +9,19 @@ The agent builds a three-layer knowledge base:
 | Layer | Tool | Output |
 |-------|------|--------|
 | Layer 1: Skeleton | Codebase-Memory CLI | Architecture, file tree, symbol graph |
-| Layer 2: Annotations | Gemma 4 via OpenRouter | Per-file markdown docs with design notes |
-| Layer 3: Workflows | Gemma 4 via OpenRouter | End-to-end flow docs with Mermaid diagrams |
+| Layer 2: Annotations | Kimi via internal API | Per-file markdown docs with design notes |
+| Layer 3: Workflows | Kimi via internal API | End-to-end flow docs with Mermaid diagrams |
+
+> **Note on code quality:** The target codebase has sparse comments. Annotation prompts are specifically tuned to infer intent from function naming, call graphs, and BLE domain knowledge. Inferred content is explicitly marked in annotations.
 
 ## Project Structure
 
 ```
-wakeup-agent/
+codebase-agent/
 ├── CLAUDE.md                          # Project instructions
 ├── agent_config.yaml                  # LLM + paths config
 ├── src/
-│   ├── llm_client.py                  # OpenAI-compatible LLM wrapper
+│   ├── llm_client.py                  # OpenAI-compatible LLM wrapper (Kimi)
 │   ├── cbm_client.py                  # Codebase-Memory CLI wrapper
 │   ├── annotator.py                   # Layer 2: annotation pipeline
 │   ├── workflow_exporter.py           # Layer 3: workflow doc generation
@@ -27,8 +29,8 @@ wakeup-agent/
 │   ├── cli.py                         # Interactive CLI
 │   └── prompt_templates.py            # All prompt templates
 ├── knowledge-base/
-│   └── leveldb/
-│       ├── business-context.md        # Human-written domain context
+│   └── ble-arb/
+│       ├── business-context.md        # BLE + arbitration domain context
 │       ├── skeleton/                  # Layer 1 outputs
 │       ├── annotations/               # Layer 2 outputs (per-file .md)
 │       └── workflows/                 # Layer 3 outputs
@@ -39,80 +41,93 @@ wakeup-agent/
 
 - Python 3.10+
 - `codebase-memory-mcp` binary installed and on `PATH`
-- LevelDB cloned and indexed at `/Users/myu/projects/leveldb`
-- OpenRouter API key (set as `OPENROUTER_API_KEY` env var)
+- Target repo cloned at `D:\07-Hmos_AI_Engine\HMOS_AI_Engine`
+  - If running under WSL/Linux, adjust `repo_path` in `agent_config.yaml` to the Linux mount path (e.g. `/mnt/d/07-Hmos_AI_Engine/HMOS_AI_Engine`)
+- Access to company internal network (Kimi API at `10.43.2.173`)
 
 ## Setup
 
 ```bash
 pip install -r requirements.txt
-export OPENROUTER_API_KEY=<your-key>
 ```
+
+No external API key environment variable needed — the Kimi API key is configured directly in `agent_config.yaml`.
 
 ## Configuration
 
-Edit `agent_config.yaml` to adjust LLM model, paths, and token limits:
+`agent_config.yaml`:
 
 ```yaml
 llm:
   providers:
-    openrouter:
-      base_url: "https://openrouter.ai/api/v1"
-      api_key: "${OPENROUTER_API_KEY}"
-      default_model: "google/gemma-4-31b-it:free"
+    kimi:
+      base_url: "http://10.43.2.173:8263/v1"
+      api_key: "sk-666"
+      default_model: "kimi"
   max_tokens: 4096
   temperature: 0.3
 
 codebase_memory:
   binary: "codebase-memory-mcp"
-  repo_path: "/Users/myu/projects/leveldb"
+  repo_path: "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine"
+  project: "07-Hmos_AI_Engine-HMOS_AI_Engine"
 
 knowledge_base:
-  root: "./knowledge-base/leveldb"
+  root: "./knowledge-base/ble-arb"
 ```
 
-Alternative models:
-- `google/gemma-4-26b-a4b-it:free` — faster MoE variant (lower quality)
-- `google/gemma-4-31b-it` — paid tier ($0.14/M tokens), use if free tier rate limits
-
 ## Usage
+
+### Step 0 — Index the repository (once)
+
+```bash
+codebase-memory-mcp cli index_repository '{"repo_path": "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine"}'
+```
 
 ### Layer 1 — Extract skeleton
 
 ```bash
-python src/annotator.py --layer 1
+python src/extract_skeleton.py
 ```
 
-Runs Codebase-Memory queries and writes results to `knowledge-base/leveldb/skeleton/`.
+Runs Codebase-Memory queries and writes results to `knowledge-base/ble-arb/skeleton/`.
 
 ### Layer 2 — Annotate files
 
 ```bash
-python src/annotator.py --layer 2
+# Preview: discover TypeScript files and show prompt sizes without calling LLM
+python -m src.annotator --discover --dry-run
+
+# Test run: annotate first 5 files
+python -m src.annotator --discover --limit 5
+
+# Full annotation pass
+python -m src.annotator --discover
+
+# Force re-annotate specific files
+python -m src.annotator path/to/file.ts --force
 ```
 
-Annotates ~25 prioritized LevelDB source files. Each output is a markdown file with YAML front matter (`status: pending|reviewed|revised`).
-
-> **Rate limit:** OpenRouter free tier allows 20 req/min / 200 req/day. The annotation pass for 25 files fits within the daily limit.
+The `--discover` flag queries Codebase-Memory for all `.ts`/`.tsx` files (excluding tests and `node_modules`) and uses them as the annotation scope. Each output is a markdown file with YAML front matter (`status: pending|reviewed|revised`).
 
 ### Layer 3 — Generate workflow docs
 
 ```bash
-python src/workflow_exporter.py
+python -m src.workflow_exporter
 ```
 
-Auto-discovers workflows from Layer 2 annotations and generates Mermaid-diagram docs in `knowledge-base/leveldb/workflows/`.
+Auto-discovers workflows from Layer 2 annotations and generates Mermaid-diagram docs in `knowledge-base/ble-arb/workflows/`.
 
 ### Interactive Q&A CLI
 
 ```bash
-python src/cli.py
+python -m src.cli
 ```
 
 | Prefix | Behavior |
 |--------|----------|
-| *(none)* | Free-text → annotations + cbm + LLM answer |
-| `?` | Structural query → cbm only, no LLM |
+| *(none)* | Free-text → annotations + CBM + LLM answer |
+| `?` | Structural query → CBM only, no LLM |
 | `!` | Correction → update `business-context.md` or annotations |
 | `/export workflow` | Trigger Layer 3 |
 | `/status` | Show annotation coverage stats |
@@ -125,26 +140,35 @@ All commands use JSON parameter format:
 # List indexed projects
 codebase-memory-mcp cli list_projects '{}'
 
-# Search symbols
-codebase-memory-mcp cli search_graph '{"name_pattern": ".*Cache.*"}'
-codebase-memory-mcp cli search_graph '{"file_pattern": "db/db_impl.cc"}'
+# Discover all source files
+codebase-memory-mcp cli search_graph '{"label": "File"}'
+
+# Search symbols by name pattern
+codebase-memory-mcp cli search_graph '{"name_pattern": ".*Arbitrat.*"}'
 
 # Trace call paths
-codebase-memory-mcp cli trace_call_path '{"function_name": "DBImpl::Write", "direction": "both"}'
+codebase-memory-mcp cli trace_call_path '{"function_name": "startArbitration", "direction": "both"}'
 
 # Architecture overview
 codebase-memory-mcp cli get_architecture '{}'
 
 # Cypher query
-codebase-memory-mcp cli query_graph '{"query": "MATCH (n:Function)-[:CALLS]->(m:Function) WHERE n.name CONTAINS \"Compact\" RETURN n.name, m.name LIMIT 20"}'
+codebase-memory-mcp cli query_graph '{"query": "MATCH (n:Function)-[:CALLS]->(m:Function) WHERE n.name CONTAINS \"BLE\" RETURN n.name, m.name LIMIT 20"}'
 ```
 
 ## Annotation Scope
 
-**Priority 1 — Core DB logic:** `db/db_impl.cc`, `db/version_set.cc`, `db/write_batch.cc`, `db/memtable.cc`, `db/log_writer.cc`, `db/log_reader.cc`, `db/table_cache.cc`, `db/builder.cc`, `db/filename.cc`
+Scope is auto-discovered via `--discover`. It includes all `.ts`/`.tsx` files from the indexed repository, excluding:
+- Files containing `_test` in the path
+- Files under `node_modules/`
 
-**Priority 2 — SSTable layer:** `table/table.cc`, `table/table_builder.cc`, `table/block.cc`, `table/block_builder.cc`, `table/format.cc`, `table/merger.cc`, `table/two_level_iterator.cc`
+After the first `--discover --dry-run` run, review the file list and optionally populate `SCOPE` in `src/annotator.py` manually to prioritize core modules.
 
-**Priority 3 — Utilities:** `util/cache.cc`, `util/arena.cc`, `util/bloom.cc`, `util/coding.cc`, `util/env_posix.cc`
+## Working with Sparse-Comment Code
 
-Skipped: `*_test.cc`, benchmarks, `third_party/`
+Because the target codebase has limited inline documentation, annotations follow these conventions:
+
+- **Inferred intent** is explicitly labeled as "(inferred)" in annotation text
+- The `### Questions` section in each annotation captures genuinely ambiguous code for human review
+- `business-context.md` serves as the primary domain knowledge source; update it as you learn more about the codebase
+- The `!` correction command in the CLI lets you refine annotations and business-context interactively

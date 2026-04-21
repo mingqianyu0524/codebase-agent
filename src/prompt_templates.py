@@ -1,6 +1,6 @@
 """Prompt templates used by the annotator and exporter."""
 
-QA_PROMPT = """You are a C++ code-analysis assistant with deep knowledge of Google's LevelDB.
+QA_PROMPT = """You are a code-analysis assistant for the HMOS AI Engine BLE collaborative arbitration module.
 
 ## Project Context
 {business_context}
@@ -17,7 +17,7 @@ the evidence is insufficient, say so explicitly and suggest which file or \
 symbol the user should inspect next. Keep the answer under ~300 words.
 """
 
-CORRECTION_PROMPT = """You are updating the LevelDB knowledge base based on a human correction.
+CORRECTION_PROMPT = """You are updating the codebase knowledge base based on a human correction.
 
 ## Existing content of `{target_file}`
 ```
@@ -34,7 +34,7 @@ commentary or markdown fences.
 """
 
 
-DISCOVER_WORKFLOWS_PROMPT = """You are a software architect analyzing Google's LevelDB.
+DISCOVER_WORKFLOWS_PROMPT = """You are a software architect analyzing the HMOS AI Engine BLE collaborative arbitration module.
 
 ## Project Context
 {business_context}
@@ -44,7 +44,7 @@ DISCOVER_WORKFLOWS_PROMPT = """You are a software architect analyzing Google's L
 
 Identify 3-6 end-to-end **workflows** worth documenting. A workflow is a
 cross-file flow of control that achieves a user-visible or system-level
-outcome (e.g. "Write path", "Compaction cycle", "Crash recovery").
+outcome (e.g. "BLE advertisement cycle", "Arbitration round", "Device handoff").
 
 Return ONLY a JSON object with this exact shape (no surrounding text, no
 markdown fences):
@@ -56,7 +56,7 @@ markdown fences):
       "name": "Human-Readable Name",
       "summary": "One sentence on what this workflow accomplishes.",
       "entry_points": ["function or class names where the flow begins"],
-      "files": ["relative/path/to/annotation/file.cc", "..."]
+      "files": ["relative/path/to/annotation/file.ts", "..."]
     }}
   ]
 }}
@@ -69,7 +69,7 @@ Constraints:
 """
 
 
-WORKFLOW_DOC_PROMPT = """You are documenting an end-to-end workflow in Google's LevelDB.
+WORKFLOW_DOC_PROMPT = """You are documenting an end-to-end workflow in the HMOS AI Engine BLE collaborative arbitration module.
 
 ## Project Context
 {business_context}
@@ -101,14 +101,19 @@ function/class responsible and the file.
 
 ### Invariants & Failure Modes
 Key invariants the workflow preserves, and what happens on failure (e.g.
-partial writes, crashes, rate limits).
+BLE advertisement loss, arbitration timeout, device disconnect).
 
 ### Open Questions
 Bullets for anything that the annotations don't make clear. Omit if none.
 """
 
 
-ANNOTATE_PROMPT = """You are a C++ code analysis assistant analyzing Google's LevelDB.
+ANNOTATE_PROMPT = """You are a TypeScript code analysis assistant analyzing the HMOS AI Engine BLE collaborative arbitration module.
+
+NOTE: This codebase has sparse comments and documentation. Where intent is unclear,
+infer it from: (1) function/variable naming, (2) BLE protocol knowledge,
+(3) call patterns shown below, (4) the business context. Be explicit when you are
+inferring rather than reading documented intent.
 
 ## Project Context
 {business_context}
@@ -126,7 +131,7 @@ ANNOTATE_PROMPT = """You are a C++ code analysis assistant analyzing Google's Le
 {symbols}
 
 ## Source Code:
-```cpp
+```typescript
 {source}
 ```
 
@@ -134,25 +139,25 @@ Output in markdown with these exact sections:
 
 ### File Overview
 2-3 sentences: what this file does and where it sits in the system. Ground \
-the claim in the call relations above.
+the claim in the call relations above. If intent must be inferred, say so.
 
 ### Key Symbol Annotations
 For each public/important function or class, 1 sentence describing its role. \
 Use a bulleted list of `symbol_name — description`.
 
 ### Design Patterns & Engineering Practices
-Notable C++ patterns, RAII usage, thread safety mechanisms, ownership \
-conventions, or design choices worth learning from. This section is \
-important — the user is studying this codebase to learn good C++ engineering \
-practices. Be specific and reference line numbers or symbol names.
+Notable TypeScript patterns, async/await usage, BLE event-driven patterns, \
+arbitration state machine conventions, or design choices worth noting. \
+Be specific and reference symbol names or line ranges where possible.
 
 ### Internal Flow
-If this file contains important control flow, describe it with a mermaid \
+If this file contains important control flow (e.g. BLE scan → arbitrate → \
+advertise, or state machine transitions), describe it with a mermaid \
 `flowchart` or `sequenceDiagram` block. Skip this section entirely if the \
 flow is trivial.
 
 ### Questions
-Code segments whose purpose is unclear, for human review. Use a bulleted \
+Code segments whose purpose is unclear even after inference. Use a bulleted \
 list, each item citing a specific symbol or line range. Omit the section if \
 nothing is unclear.
 """

@@ -1,25 +1,23 @@
 llm:
   providers:
-    openrouter:
-      base_url: "https://openrouter.ai/api/v1"
-      api_key_env: "OPENROUTER_API_KEY"
-      default_model: "google/gemma-4-31b-it"
-      fallback_models:
-        - "google/gemma-4-31b-it:free"
-        - "google/gemma-4-26b-a4b-it:free"
+    kimi:
+      base_url: "http://10.43.2.173:8263/v1"
+      api_key: "sk-666"
+      default_model: "kimi"
 
   task_routing:
-    annotate: "openrouter"
-    query: "openrouter"
-    export: "openrouter"
+    annotate: "kimi"
+    query: "kimi"
+    export: "kimi"
 
   max_tokens: 4096
   temperature: 0.3
 
 codebase_memory:
   binary: "codebase-memory-mcp"
-  repo_path: "/Users/myu/projects/leveldb"
-  project: "Users-myu-projects-leveldb"
+  # Windows path — if running under WSL/Linux use /mnt/d/07-Hmos_AI_Engine/HMOS_AI_Engine
+  repo_path: "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine"
+  project: "07-Hmos_AI_Engine-HMOS_AI_Engine"
 
 knowledge_base:
-  root: "./knowledge-base/leveldb"
+  root: "./knowledge-base/ble-arb"

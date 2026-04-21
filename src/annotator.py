@@ -13,46 +13,33 @@ from .config import load_config
 from .llm_client import LLMClient
 from .prompt_templates import ANNOTATE_PROMPT
 
-# Annotation scope (prioritized). Relative to repo root.
-SCOPE: list[str] = [
-    # Priority 1: Core DB logic
-    "db/db_impl.cc",
-    "db/db_impl.h",
-    "db/version_set.cc",
-    "db/version_set.h",
-    "db/version_edit.cc",
-    "db/write_batch.cc",
-    "db/memtable.cc",
-    "db/log_writer.cc",
-    "db/log_reader.cc",
-    "db/table_cache.cc",
-    "db/builder.cc",
-    "db/filename.cc",
-    # Priority 2: SSTable layer
-    "table/table.cc",
-    "table/table_builder.cc",
-    "table/block.cc",
-    "table/block_builder.cc",
-    "table/format.cc",
-    "table/merger.cc",
-    "table/two_level_iterator.cc",
-    # Priority 3: Utilities
-    "util/cache.cc",
-    "util/arena.cc",
-    "util/bloom.cc",
-    "util/coding.cc",
-    "util/env_posix.cc",
-]
+# Annotation scope — populate manually or use --discover to auto-detect .ts/.tsx files.
+SCOPE: list[str] = []
 
-# Source files exceeding this size get truncated; keeps prompts well below 16K
-# tokens. LevelDB's largest files (db_impl.cc, version_set.cc) are ~2-3k LOC.
+# File extensions considered for auto-discovery.
+TS_EXTENSIONS = {".ts", ".tsx"}
+
+# Source files exceeding this size get truncated to keep prompts under ~16K tokens.
 MAX_SOURCE_CHARS = 45_000
 # Hard cap on how many symbols we paste into the prompt.
 MAX_SYMBOLS = 80
 # Inbound/outbound lists capped to keep context readable.
 MAX_EDGES = 20
-# Rate-limit safety: OpenRouter free tier is 20 req/min.
-MIN_SECONDS_BETWEEN_CALLS = 4.0
+# Inter-call delay — internal deployment has no rate limit, keep small.
+MIN_SECONDS_BETWEEN_CALLS = 0.5
+
+
+def discover_ts_files(cbm: CBMClient) -> list[str]:
+    """Return sorted list of .ts/.tsx source files reported by codebase-memory."""
+    res = cbm.search_graph(label="File", limit=500)
+    files = [
+        r["file_path"]
+        for r in res.get("results", [])
+        if Path(r["file_path"]).suffix in TS_EXTENSIONS
+        and "_test" not in r["file_path"]
+        and "node_modules" not in r["file_path"]
+    ]
+    return sorted(files)
 
 
 def _fmt_symbols(results: list[dict]) -> str:
@@ -223,14 +210,32 @@ def run(
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Annotate LevelDB source files with Gemma.")
-    ap.add_argument("files", nargs="*", help="Files to annotate (default: full scope).")
+    ap = argparse.ArgumentParser(description="Annotate TypeScript source files with Kimi.")
+    ap.add_argument("files", nargs="*", help="Files to annotate.")
+    ap.add_argument("--discover", action="store_true",
+                    help="Auto-discover .ts/.tsx files via codebase-memory (ignores positional files).")
     ap.add_argument("--dry-run", action="store_true", help="Build prompts but skip LLM calls.")
     ap.add_argument("--force", action="store_true", help="Overwrite existing annotations.")
     ap.add_argument("--limit", type=int, default=None, help="Only process first N files.")
     args = ap.parse_args()
 
-    files = args.files or SCOPE
+    if args.discover:
+        cfg = load_config()
+        cbm = CBMClient(config=cfg)
+        files: list[str] = discover_ts_files(cbm)
+        if not files:
+            print("[warn] --discover found no .ts/.tsx files. Has the repo been indexed?")
+            print("       Run: codebase-memory-mcp cli index_repository '{\"repo_path\": \"...\"}'")
+            return
+        print(f"[discover] found {len(files)} TypeScript files")
+    elif args.files:
+        files = args.files
+    elif SCOPE:
+        files = SCOPE
+    else:
+        print("[error] No files specified. Pass file paths, use --discover, or populate SCOPE.")
+        return
+
     if args.limit is not None:
         files = files[: args.limit]
     run(files, dry_run=args.dry_run, force=args.force)
