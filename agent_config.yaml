@@ -17,7 +17,7 @@ codebase_memory:
   binary: "codebase-memory-mcp"
   # Windows path — if running under WSL/Linux use /mnt/d/07-Hmos_AI_Engine/HMOS_AI_Engine
   repo_path: "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine"
-  project: "07-Hmos_AI_Engine-HMOS_AI_Engine"
+  project: "D-07-Hmos_AI_Engine-HMOS_AI_Engine"
 
 knowledge_base:
   root: "./knowledge-base/ble-arb"
