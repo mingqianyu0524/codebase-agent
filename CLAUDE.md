@@ -4,7 +4,7 @@ Build a Python-based agent that uses Codebase-Memory (structural analysis) + LLM
 Current State
 
 Codebase-Memory: installed, binary at codebase-memory-mcp
-Target repo: D:\07-Hmos_AI_Engine\HMOS_AI_Engine (Windows path; use /mnt/d/... under WSL/Linux)
+Target repo: D:\07-Hmos_AI_Engine\HMOS_AI_Engine\HMOS_AI_Engine\wakeup (Windows path; use /mnt/d/... under WSL/Linux)
 LLM: Company-internal Kimi-K2.5 deployment, model name: kimi
   Base URL: http://10.43.2.173:8263/v1
   API Key: sk-666 (configured directly in agent_config.yaml)
@@ -19,7 +19,7 @@ bash# Correct format
 codebase-memory-mcp cli <tool_name> '<json_params>'
 
 # Index the target repo (run once)
-codebase-memory-mcp cli index_repository '{"repo_path": "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine"}'
+codebase-memory-mcp cli index_repository '{"repo_path": "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine\\HMOS_AI_Engine\\wakeup"}'
 
 # List indexed projects
 codebase-memory-mcp cli list_projects '{}'
@@ -89,8 +89,8 @@ yamlllm:
 
 codebase_memory:
   binary: "codebase-memory-mcp"
-  repo_path: "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine"
-  project: "07-Hmos_AI_Engine-HMOS_AI_Engine"
+  repo_path: "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine\\HMOS_AI_Engine\\wakeup"
+  project: "D-07-Hmos_AI_Engine-HMOS_AI_Engine-HMOS_AI_Engine-wakeup"
 
 knowledge_base:
   root: "./knowledge-base/ble-arb"
@@ -102,7 +102,7 @@ cbm_client: call list_projects and get_graph_schema
 llm_client: send a test prompt to Kimi, verify response
 
 bash# Index repo
-codebase-memory-mcp cli index_repository '{"repo_path": "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine"}'
+codebase-memory-mcp cli index_repository '{"repo_path": "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine\\HMOS_AI_Engine\\wakeup"}'
 
 # Verify Python clients
 python -m src.cbm_client

@@ -41,8 +41,8 @@ codebase-agent/
 
 - Python 3.10+
 - `codebase-memory-mcp` binary installed and on `PATH`
-- Target repo cloned at `D:\07-Hmos_AI_Engine\HMOS_AI_Engine`
-  - If running under WSL/Linux, adjust `repo_path` in `agent_config.yaml` to the Linux mount path (e.g. `/mnt/d/07-Hmos_AI_Engine/HMOS_AI_Engine`)
+- Target repo cloned at `D:\07-Hmos_AI_Engine\HMOS_AI_Engine\HMOS_AI_Engine\wakeup`
+  - If running under WSL/Linux, adjust `repo_path` in `agent_config.yaml` to the Linux mount path (e.g. `/mnt/d/07-Hmos_AI_Engine/HMOS_AI_Engine/HMOS_AI_Engine/wakeup`)
 - Access to company internal network (Kimi API at `10.43.2.173`)
 
 ## Setup
@@ -69,8 +69,8 @@ llm:
 
 codebase_memory:
   binary: "codebase-memory-mcp"
-  repo_path: "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine"
-  project: "07-Hmos_AI_Engine-HMOS_AI_Engine"
+  repo_path: "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine\\HMOS_AI_Engine\\wakeup"
+  project: "D-07-Hmos_AI_Engine-HMOS_AI_Engine-HMOS_AI_Engine-wakeup"
 
 knowledge_base:
   root: "./knowledge-base/ble-arb"
@@ -81,7 +81,7 @@ knowledge_base:
 ### Step 0 — Index the repository (once)
 
 ```bash
-codebase-memory-mcp cli index_repository '{"repo_path": "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine"}'
+codebase-memory-mcp cli index_repository '{"repo_path": "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine\\HMOS_AI_Engine\\wakeup"}'
 ```
 
 ### Layer 1 — Extract skeleton
