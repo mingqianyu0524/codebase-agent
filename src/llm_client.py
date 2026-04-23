@@ -4,6 +4,7 @@ from __future__ import annotations
 import time
 from typing import Optional
 
+import httpx
 from openai import OpenAI, APIError, RateLimitError
 
 from .config import load_config, resolve_api_key
@@ -20,7 +21,11 @@ class LLMClient:
                 f"API key not set for provider '{provider}'. "
                 f"Check 'api_key' or 'api_key_env' in agent_config.yaml."
             )
-        self.client = OpenAI(base_url=prov_cfg["base_url"], api_key=api_key)
+        self.client = OpenAI(
+            base_url=prov_cfg["base_url"],
+            api_key=api_key,
+            http_client=httpx.Client(proxies={}),  # bypass system proxy for internal endpoints
+        )
         self.model = prov_cfg["default_model"]
         self.fallback_models: list[str] = list(prov_cfg.get("fallback_models") or [])
         self.max_tokens = llm_cfg.get("max_tokens", 4096)
