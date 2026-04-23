@@ -14,7 +14,7 @@ llm:
   temperature: 0.3
 
 codebase_memory:
-  binary: "codebase-memory-mcp"
+  binary: "D:\\07-Hmos_AI_Engine\\_codebase-agent\\codebase-memory\\codebase-memory-mcp"
   # Windows path — if running under WSL/Linux use /mnt/d/07-Hmos_AI_Engine/HMOS_AI_Engine/HMOS_AI_Engine/wakeup
   repo_path: "D:\\07-Hmos_AI_Engine\\HMOS_AI_Engine\\HMOS_AI_Engine\\wakeup"
   project: "D-07-Hmos_AI_Engine-HMOS_AI_Engine-HMOS_AI_Engine-wakeup"
