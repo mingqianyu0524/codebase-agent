@@ -24,7 +24,7 @@ class LLMClient:
         self.client = OpenAI(
             base_url=prov_cfg["base_url"],
             api_key=api_key,
-            http_client=httpx.Client(proxies={}),  # bypass system proxy for internal endpoints
+            http_client=httpx.Client(trust_env=False),  # bypass system proxy for internal endpoints
         )
         self.model = prov_cfg["default_model"]
         self.fallback_models: list[str] = list(prov_cfg.get("fallback_models") or [])
