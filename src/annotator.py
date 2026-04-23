@@ -30,12 +30,18 @@ MIN_SECONDS_BETWEEN_CALLS = 0.5
 
 
 def discover_ts_files(cbm: CBMClient) -> list[str]:
-    """Return sorted list of .ts/.tsx source files reported by codebase-memory."""
+    """Return sorted list of .ts/.tsx source files reported by codebase-memory.
+
+    Only returns files under src/main/ets/ to exclude build artifacts,
+    compiled cache, and generated declaration files (.d.ts).
+    """
     res = cbm.search_graph(label="File", limit=500)
     files = [
         r["file_path"]
         for r in res.get("results", [])
         if Path(r["file_path"]).suffix in TS_EXTENSIONS
+        and not r["file_path"].endswith(".d.ts")
+        and r["file_path"].startswith("src/main/ets/")
         and "_test" not in r["file_path"]
         and "node_modules" not in r["file_path"]
     ]
