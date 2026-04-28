@@ -121,6 +121,9 @@ ANNOTATE_PROMPT = """你是一名 TypeScript 代码分析助手，正在分析 H
 ### 出站调用（本文件调用了什么）：
 {outbound}
 
+### 共享状态写入方（本文件通过 getter 读取的字段，其 setter 在哪里被调用）：
+{shared_state}
+
 ## 符号签名（来自结构分析）：
 {symbols}
 

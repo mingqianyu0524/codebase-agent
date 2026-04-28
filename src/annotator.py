@@ -91,6 +91,19 @@ def _fetch_context(cbm: CBMClient, file_path: str) -> dict:
         f'RETURN caller.name AS caller, callee.name AS callee, '
         f'callee.file_path AS callee_file LIMIT 100'
     )
+    # Shared state: for each getter this file reads, find who calls the matching setter.
+    # Reveals cross-file data flow through getter/setter pairs (e.g. DeviceData fields).
+    shared_state_q = (
+        f'MATCH (reader)-[:CALLS]->(getter), (writer)-[:CALLS]->(setter) '
+        f'WHERE reader.file_path = "{file_path}" '
+        f'AND getter.file_path = setter.file_path '
+        f'AND getter.name STARTS WITH "get" '
+        f'AND setter.name STARTS WITH "set" '
+        f'AND substring(getter.name, 3) = substring(setter.name, 3) '
+        f'AND writer.file_path <> "{file_path}" '
+        f'RETURN writer.name AS writer, writer.file_path AS writer_file, '
+        f'setter.name AS setter, getter.name AS getter LIMIT 30'
+    )
     try:
         inbound = cbm.query_graph(inbound_q).get("rows", [])
     except CBMError:
@@ -99,7 +112,12 @@ def _fetch_context(cbm: CBMClient, file_path: str) -> dict:
         outbound = cbm.query_graph(outbound_q).get("rows", [])
     except CBMError:
         outbound = []
-    return {"symbols": symbols, "inbound": inbound, "outbound": outbound}
+    try:
+        shared_state = cbm.query_graph(shared_state_q).get("rows", [])
+    except CBMError:
+        shared_state = []
+    return {"symbols": symbols, "inbound": inbound, "outbound": outbound,
+            "shared_state": shared_state}
 
 
 def _read_source(repo_root: Path, file_path: str) -> str:
@@ -155,6 +173,7 @@ def annotate_file(
         file_path=file_path,
         inbound=_fmt_edges(ctx["inbound"], "callers"),
         outbound=_fmt_edges(ctx["outbound"], "callees"),
+        shared_state=_fmt_edges(ctx["shared_state"], "shared state writers"),
         symbols=_fmt_symbols(ctx["symbols"]),
         source=source,
     )
@@ -162,7 +181,7 @@ def annotate_file(
     if dry_run:
         print(f"  [dry-run] {file_path} prompt={len(prompt)} chars, "
               f"symbols={len(ctx['symbols'])}, in={len(ctx['inbound'])}, "
-              f"out={len(ctx['outbound'])}")
+              f"out={len(ctx['outbound'])}, shared={len(ctx['shared_state'])}")
         return None
 
     print(f"  -> LLM call for {file_path} (prompt={len(prompt)} chars)")
