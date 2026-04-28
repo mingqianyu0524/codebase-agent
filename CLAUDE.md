@@ -156,4 +156,4 @@ Error handling: cbm CLI may return non-JSON on errors. Always try/except parse.
 Source code reading: Read files directly from disk using the configured repo_path. On WSL/Linux, adjust path accordingly.
 Token budget: Keep total prompt under 16K tokens per annotation call. Large TS files truncated at 45K chars.
 Sparse comments: Annotation prompts explicitly instruct the LLM to infer intent and label inferences. Review annotations marked Questions carefully.
-Language: All annotation outputs and prompts in English. CLI interface in English.
+Language: All annotation outputs in Chinese (中文). Business context and domain terms are in Chinese. CLI interface in English.
