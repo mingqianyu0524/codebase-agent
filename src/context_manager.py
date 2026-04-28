@@ -17,7 +17,8 @@ _STOPWORDS = {
 }
 # Camel-case identifiers worth looking up in CBM.
 _IDENT_RE = re.compile(r"\b[A-Z][a-zA-Z0-9_]{2,}(?:::[A-Za-z0-9_]+)*\b")
-_WORD_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]{2,}")
+# English words OR Chinese character sequences (2+ chars).
+_WORD_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]{2,}|[一-鿿]{2,}")
 
 
 @dataclass
@@ -29,7 +30,15 @@ class RetrievedChunk:
 
 
 def _tokens(text: str) -> list[str]:
-    return [t for t in (w.lower() for w in _WORD_RE.findall(text)) if t not in _STOPWORDS]
+    tokens = []
+    for w in _WORD_RE.findall(text):
+        if w[0].isascii():
+            t = w.lower()
+            if t not in _STOPWORDS:
+                tokens.append(t)
+        else:
+            tokens.append(w)  # Chinese sequences: keep as-is
+    return tokens
 
 
 def _score_annotation(query_tokens: list[str], body: str) -> float:
